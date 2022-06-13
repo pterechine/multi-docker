@@ -1,0 +1,26 @@
+language: generic
+
+sudo: required
+
+services:
+  -docker
+
+before_install:
+  - docker build -t pterechine/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true pterechine/react-test npm test
+
+after_success:
+  - docker build -t pterechine/multi-client ./client
+  - docker build -t pterechine/multi-nginx ./nginx
+  - docker build -t pterechine/multi-server ./server
+  - docker build -t pterechine/multi-worker ./worker
+ # Log into docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+ # Take images and push to docker hub
+  - docker push pterechine/multi-client
+  - docker push pterechine/multi-nginx
+  - docker push pterechine/multi-server
+  - docker push pterechine/multi-worker
+
